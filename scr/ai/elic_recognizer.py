@@ -5,15 +5,31 @@ from torchvision import transforms
 from PIL import Image
 import os
 
+# Метки классов (0-10 + None)
+DIGIT_CLASSES = {
+    0: "0",
+    1: "1",
+    2: "2",
+    3: "3",
+    4: "4",
+    5: "5",
+    6: "6",
+    7: "7",
+    8: "8",
+    9: "9",
+    10: "10",
+    11: "None",
+}
+
 
 class DigitCNN35x27(nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes=12):  # 12 классов
         super().__init__()
         self.conv1 = nn.Conv2d(1, 16, kernel_size=3, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
         self.fc1 = nn.Linear(32 * 8 * 6, 64)
-        self.fc2 = nn.Linear(64, 11)  # 11 классов (0-10)
+        self.fc2 = nn.Linear(64, num_classes)
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
@@ -27,11 +43,9 @@ class DigitCNN35x27(nn.Module):
 class DigitRecognizer:
     def __init__(self, model_path=None, device=None):
         self.device = device or torch.device("cpu")
-        self.model = DigitCNN35x27().to(self.device)
+        self.model = DigitCNN35x27(num_classes=12).to(self.device)
 
-        # Автоматический поиск модели
         if model_path is None:
-            # Ищем в data/models/ относительно корня проекта
             project_root = os.path.dirname(
                 os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             )
@@ -57,7 +71,7 @@ class DigitRecognizer:
         )
 
     def predict(self, img_path_or_pil):
-        """Предсказывает цифру 0-10"""
+        """Предсказывает цифру/None (0-10 или 11)"""
         if isinstance(img_path_or_pil, str):
             img = Image.open(img_path_or_pil)
         else:
@@ -70,5 +84,6 @@ class DigitRecognizer:
             pred = output.argmax(1).item()
             confidence = F.softmax(output, dim=1)[0, pred].item()
 
-        return pred, confidence  # Возвращает 0-10 напрямую
+        label = DIGIT_CLASSES.get(pred, "Unknown")
+        return pred, label, confidence  # (0-11, "0"-"10"-"None", 0-1)
 

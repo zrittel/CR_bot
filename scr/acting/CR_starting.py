@@ -82,7 +82,7 @@ class CR_activites:
             card_name, confidence = card_recognizer.predict(
                 f"temp/cards_img/card_{i}.png"
             )
-            cards.append((card_name, confidence))
+            cards.append(card_name)
         print(cards)
         return None
 
@@ -91,13 +91,15 @@ class CR_activites:
         elic = elic_screenshot.crop((154, 977, 154 + 35, 977 + 27))
         elic.save("temp/elic/elic_screenshot.png")
 
+        # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # elic.save(f"data/training_data/data_digits/raw/elic_{timestamp}.png")
         return None
 
     def get_elic_count():
         CR_activites.get_elic_image()
         elic_img = Image.open("temp/elic/elic_screenshot.png")
-        digit, conf = recognizer.predict(elic_img)
-        return digit if conf >= 0.7 else None
+        digit, label, conf = recognizer.predict(elic_img)
+        return label
 
 
 """
@@ -132,18 +134,14 @@ print("🔄 Запуск цикла (Ctrl+C для остановки)...")
 while True:
     time.sleep(0.2)
     CR_activites.get_screenshot()
+    CR_activites.get_elic_image()
     elic = CR_activites.get_elic_count()
     print(f"Elic: {elic}")
-    if elic != -1 and elic is not None:
-        CR_activites.get_cards()
+    print(CR_activites.get_cards())
+    # if elic != -1 and elic is not None:
+    #     CR_activites.get_elic_image()
+    #
 
-# for _ in range(4):
-#     time.sleep(0.2)
-#     CR_activites.get_screenshot()
-#     elic = CR_activites.get_elic_count()
-#     print(elic)
-#     if elic != -1 and elic is not None:
-#         CR_activites.get_cards_images()
 # CR_activites.get_elic_image("20251201_185447")
 
 """
