@@ -21,9 +21,7 @@ CARD_CLASSES = {
 
 class CardRecognizer:
     def __init__(self, model_path=None, device=None):
-        self.device = device or torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        self.device = device or torch.device("cpu")
         self.model = CardCNN(num_classes=9).to(self.device)
 
         if model_path is None:

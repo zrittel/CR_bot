@@ -1,8 +1,15 @@
+import sys
+from pathlib import Path
+
+# Добавляем корень проекта в PYTHONPATH
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from adbutils import adb
 import subprocess
 from datetime import datetime
 from PIL import Image
 from scr.ai.elic_recognizer import DigitRecognizer
+from scr.ai.card_recognizer import CardRecognizer
 import numpy as np
 import os
 import time
@@ -10,6 +17,7 @@ import signal
 import sys
 
 recognizer = DigitRecognizer()
+card_recognizer = CardRecognizer()
 
 d = adb.device("192.168.240.112:5555")
 # pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
@@ -63,15 +71,19 @@ class CR_activites:
             cards[i] = cards_screenshot.crop(
                 (x + i * 108, y, x + i * 108 + 101, y + 125)
             )
-            # cards[i].save(f"temp/cards_img/card_{i}.png")
+            cards[i].save(f"temp/cards_img/card_{i}.png")
 
-            """
-            temp
-            """
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        return None
 
-            cards[i].save(f"data/training_data/data_cards/raw/card_{i}_{timestamp}.png")
-
+    def get_cards():
+        CR_activites.get_cards_images()
+        cards = []
+        for i in range(0, 4):
+            card_name, confidence = card_recognizer.predict(
+                f"temp/cards_img/card_{i}.png"
+            )
+            cards.append((card_name, confidence))
+        print(cards)
         return None
 
     def get_elic_image():
@@ -85,7 +97,7 @@ class CR_activites:
         CR_activites.get_elic_image()
         elic_img = Image.open("temp/elic/elic_screenshot.png")
         digit, conf = recognizer.predict(elic_img)
-        return digit - 1 if conf >= 0.7 else None
+        return digit if conf >= 0.7 else None
 
 
 """
@@ -123,7 +135,7 @@ while True:
     elic = CR_activites.get_elic_count()
     print(f"Elic: {elic}")
     if elic != -1 and elic is not None:
-        CR_activites.get_cards_images()
+        CR_activites.get_cards()
 
 # for _ in range(4):
 #     time.sleep(0.2)

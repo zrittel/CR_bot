@@ -1,7 +1,15 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+# Путь к скрипту
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)  # scr/ai
+grandparent_dir = os.path.dirname(parent_dir)  # scr
+root_dir = os.path.dirname(grandparent_dir)  # CR_bot
+
+sys.path.insert(0, root_dir)
+
+from scr.ai.card_recognizer_model import CardCNN
 
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
@@ -10,13 +18,6 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import transforms
 
-
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from scr.ai.card_recognizer_model import CardCNN
 
 CARD_CLASSES = {
     0: "None",
@@ -67,7 +68,7 @@ class CardDataset(Dataset):
 
 
 def train():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
     print(f"Device: {device}\n")
 
     dataset = CardDataset("data/training_data/data_cards")
