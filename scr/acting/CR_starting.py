@@ -2,13 +2,14 @@ from adbutils import adb
 import subprocess
 from datetime import datetime
 from PIL import Image
-from elic_recognizer import DigitRecognizer
+from scr.ai.elic_recognizer import DigitRecognizer
 import numpy as np
 import os
 import time
+import signal
+import sys
 
-
-recognizer = DigitRecognizer("digit_model_35x27.pth")
+recognizer = DigitRecognizer()
 
 d = adb.device("192.168.240.112:5555")
 # pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
@@ -27,8 +28,8 @@ class CR_activites:
         return None
 
     def get_screenshot():
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_name = f"temp/screenshot/{timestamp}.png"
+        # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_name = "temp/screenshot/battle_screenshot.png"
 
         d.shell("screencap /sdcard/screenshot.png")
         subprocess.run(
@@ -41,7 +42,7 @@ class CR_activites:
                 file_name,
             ]
         )
-        return f"{timestamp}.png"
+        return None
 
     def tap(x, y):
         d.shell(f"input tap {x} {y}")
@@ -51,8 +52,8 @@ class CR_activites:
         d.shell(f"input swipe {x0} {y0} {x} {y} {duration}")
         return None
 
-    def get_cards_images(file_name):
-        cards_screenshot = Image.open(f"temp/screenshot/{file_name}")
+    def get_cards_images():
+        cards_screenshot = Image.open("temp/screenshot/battle_screenshot.png")
 
         cards = [0] * 4
         x = 129
@@ -62,19 +63,26 @@ class CR_activites:
             cards[i] = cards_screenshot.crop(
                 (x + i * 108, y, x + i * 108 + 101, y + 125)
             )
-            cards[i].save(f"temp/cards_img/card_{i}.png")
+            # cards[i].save(f"temp/cards_img/card_{i}.png")
+
+            """
+            temp
+            """
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+            cards[i].save(f"data/training_data/data_cards/raw/card_{i}_{timestamp}.png")
 
         return None
 
-    def get_elic_image(file_name):
-        elic_screenshot = Image.open(f"temp/screenshot/{file_name}")
+    def get_elic_image():
+        elic_screenshot = Image.open("temp/screenshot/battle_screenshot.png")
         elic = elic_screenshot.crop((154, 977, 154 + 35, 977 + 27))
         elic.save("temp/elic/elic_screenshot.png")
 
         return None
 
-    def get_elic_count(file_name):
-        CR_activites.get_elic_image(file_name)
+    def get_elic_count():
+        CR_activites.get_elic_image()
         elic_img = Image.open("temp/elic/elic_screenshot.png")
         digit, conf = recognizer.predict(elic_img)
         return digit - 1 if conf >= 0.7 else None
@@ -101,10 +109,29 @@ class CR_activites:
 # print(CR_activites.get_elic_codsunt("20251130_145126"))
 
 
-for _ in range(60):
-    time.sleep(0.2)
-    print(CR_activites.get_elic_count(CR_activites.get_screenshot()))
+def signal_handler(sig, frame):
+    print("\n🛑 Цикл остановлен пользователем (Ctrl+C)")
+    sys.exit(0)
 
+
+signal.signal(signal.SIGINT, signal_handler)
+
+print("🔄 Запуск цикла (Ctrl+C для остановки)...")
+while True:
+    time.sleep(0.2)
+    CR_activites.get_screenshot()
+    elic = CR_activites.get_elic_count()
+    print(f"Elic: {elic}")
+    if elic != -1 and elic is not None:
+        CR_activites.get_cards_images()
+
+# for _ in range(4):
+#     time.sleep(0.2)
+#     CR_activites.get_screenshot()
+#     elic = CR_activites.get_elic_count()
+#     print(elic)
+#     if elic != -1 and elic is not None:
+#         CR_activites.get_cards_images()
 # CR_activites.get_elic_image("20251201_185447")
 
 """
