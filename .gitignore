@@ -23,6 +23,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+data/training_data
 
 # IDEs
 .vscode/
