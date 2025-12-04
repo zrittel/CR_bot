@@ -1,3 +1,8 @@
+import os
+
+os.environ["ROCBLAS_LAYER"] = "0"
+os.environ["HSA_OVERRIDE_GFX_VERSION"] = "11.0.0"
+
 import sys
 from pathlib import Path
 
@@ -11,7 +16,6 @@ from PIL import Image
 from scr.ai.elic_recognizer import DigitRecognizer
 from scr.ai.card_recognizer import CardRecognizer
 import numpy as np
-import os
 import time
 import signal
 import sys

@@ -42,7 +42,9 @@ class DigitCNN35x27(nn.Module):
 
 class DigitRecognizer:
     def __init__(self, model_path=None, device=None):
-        self.device = device or torch.device("cpu")
+        self.device = device or torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
         self.model = DigitCNN35x27(num_classes=12).to(self.device)
 
         if model_path is None:
@@ -86,4 +88,3 @@ class DigitRecognizer:
 
         label = DIGIT_CLASSES.get(pred, "Unknown")
         return pred, label, confidence  # (0-11, "0"-"10"-"None", 0-1)
-

@@ -1,4 +1,8 @@
 import os
+
+os.environ["ROCBLAS_LAYER"] = "0"
+os.environ["HSA_OVERRIDE_GFX_VERSION"] = "11.0.0"
+
 import sys
 from pathlib import Path
 
@@ -129,7 +133,7 @@ def predict_single(model, img_tensor, device):
 
 
 def main():
-    device = torch.device("cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}\n")
 
     dataset = DigitsDataset("data/training_data/data_digits")
@@ -184,4 +188,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
