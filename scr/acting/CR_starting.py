@@ -142,9 +142,13 @@ while True:
     elic = CR_activites.get_elic_count()
     print(f"Elic: {elic}")
     print(CR_activites.get_cards())
-    # if elic != -1 and elic is not None:
-    #     CR_activites.get_elic_image()
-    #
+    if elic not in "None":
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        arena_screenshot = Image.open("temp/screenshot/battle_screenshot.png")
+        arena_screenshot = arena_screenshot.crop((41, 7, 41 + 494, 7 + 784))
+        arena_screenshot.save(
+            f"data/training_data/data_arena/raw/arena_screenshot_{timestamp}.png"
+        )
 
 # CR_activites.get_elic_image("20251201_185447")
 
