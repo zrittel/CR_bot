@@ -140,7 +140,6 @@ class GameStatePrinter:
         """Подробный вывод объектов на арене с разделением"""
         if not objects:
             self.console.print("[yellow]⚠️  Объектов не обнаружено[/]")
-            return
 
         # Разделяем на союзных и враждебных
         ally_objects = [obj for obj in objects if obj["type"].startswith("A_")]
