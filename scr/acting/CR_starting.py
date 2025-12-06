@@ -13,8 +13,11 @@ from adbutils import adb
 import subprocess
 from datetime import datetime
 from PIL import Image
+
 from scr.ai.elic_recognizer import DigitRecognizer
 from scr.ai.card_recognizer import CardRecognizer
+from ultralytics import YOLO
+
 import numpy as np
 import time
 import signal
@@ -22,6 +25,8 @@ import sys
 
 recognizer = DigitRecognizer()
 card_recognizer = CardRecognizer()
+model = YOLO("runs/detect/train11/weights/best.pt")
+
 
 d = adb.device("192.168.240.112:5555")
 # pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
@@ -104,7 +109,17 @@ class CR_activites:
         elic_img = Image.open("temp/elic/elic_screenshot.png")
         digit, label, conf = recognizer.predict(elic_img)
         return label
+    
+    def get_arena_screenshot():
+        arena_screenshot = Image.open("temp/screenshot/battle_screenshot.png")
+        arena_screenshot = arena_screenshot.crop((41, 7, 41 + 494, 7 + 784))
+        arena_screenshot.save(
+            f"temp/arena_img/arena_screenshot.png"
+        )
 
+
+    def get_arena_status():
+        
 
 """
 ================================================
@@ -127,28 +142,28 @@ class CR_activites:
 # print(CR_activites.get_elic_codsunt("20251130_145126"))
 
 
-def signal_handler(sig, frame):
-    print("\n🛑 Цикл остановлен пользователем (Ctrl+C)")
-    sys.exit(0)
-
-
-signal.signal(signal.SIGINT, signal_handler)
-
-print("🔄 Запуск цикла (Ctrl+C для остановки)...")
-while True:
-    time.sleep(0.2)
-    CR_activites.get_screenshot()
-    CR_activites.get_elic_image()
-    elic = CR_activites.get_elic_count()
-    print(f"Elic: {elic}")
-    print(CR_activites.get_cards())
-    if elic not in "None":
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        arena_screenshot = Image.open("temp/screenshot/battle_screenshot.png")
-        arena_screenshot = arena_screenshot.crop((41, 7, 41 + 494, 7 + 784))
-        arena_screenshot.save(
-            f"data/training_data/data_arena/raw/arena_screenshot_{timestamp}.png"
-        )
+# def signal_handler(sig, frame):
+#     print("\n🛑 Цикл остановлен пользователем (Ctrl+C)")
+#     sys.exit(0)
+#
+#
+# signal.signal(signal.SIGINT, signal_handler)
+#
+# print("🔄 Запуск цикла (Ctrl+C для остановки)...")
+# while True:
+#     time.sleep(0.2)
+#     CR_activites.get_screenshot()
+#     CR_activites.get_elic_image()
+#     elic = CR_activites.get_elic_count()
+#     print(f"Elic: {elic}")
+#     print(CR_activites.get_cards())
+#     if elic not in "None":
+#         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+#         arena_screenshot = Image.open("temp/screenshot/battle_screenshot.png")
+#         arena_screenshot = arena_screenshot.crop((41, 7, 41 + 494, 7 + 784))
+#         arena_screenshot.save(
+#             f"data/training_data/data_arena/raw/arena_screenshot_{timestamp}.png"
+#         )
 
 # CR_activites.get_elic_image("20251201_185447")
 
