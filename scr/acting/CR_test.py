@@ -1,9 +1,11 @@
 import os
+
 os.environ["ROCBLAS_LAYER"] = "0"
 os.environ["HSA_OVERRIDE_GFX_VERSION"] = "11.0.0"
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from adbutils import adb
@@ -38,172 +40,160 @@ import signal
 class GameStatePrinter:
     def __init__(self):
         self.console = Console()
-    
+
     def print_game_state(self, state):
         """Красиво выводит состояние игры (один раз)"""
         # Очищаем экран
         self.console.clear()
-        
+
         # Главная панель с одной таблицей
         panel = Panel(
             self._build_game_table(state),
             title="[bold cyan]🎮 CLASH ROYALE BOT[/]",
             border_style="bright_blue",
             padding=(1, 2),
-            expand=False
+            expand=False,
         )
         self.console.print(panel)
-    
+
     def _build_game_table(self, state):
         """Создаёт таблицу со ВСЕМ состоянием"""
         table = Table(box=box.ROUNDED, padding=(0, 1))
         table.add_column("", style="")
         table.add_column("Информация", style="")
         table.add_column("Значение", style="", justify="right")
-        
+
         # Мана
         table.add_row(
             "💎",
             "Эликсир",
-            f"[bold green]{state['elixir']['elixir']}[/] ({state['elixir']['confidence']:.1%})"
+            f"[bold green]{state['elixir']['elixir']}[/] ({state['elixir']['confidence']:.1%})",
         )
-        
+
         # Карты - все в одну строку
-        cards_text = " | ".join([
-            f"[cyan]{c['name']}[/][green]({c['confidence']:.0%})[/]" 
-            for c in state['cards']
-        ])
-        table.add_row(
-            "🎴",
-            "Карты в руке",
-            cards_text
+        cards_text = " | ".join(
+            [
+                f"[cyan]{c['name']}[/][green]({c['confidence']:.0%})[/]"
+                for c in state["cards"]
+            ]
         )
-        
+        table.add_row("🎴", "Карты в руке", cards_text)
+
         # Разделяем объекты на союзных и вражеских
-        ally_objects = [obj for obj in state['objects'] if obj['type'].startswith('A_')]
-        enemy_objects = [obj for obj in state['objects'] if obj['type'].startswith('E_')]
-        
+        ally_objects = [obj for obj in state["objects"] if obj["type"].startswith("A_")]
+        enemy_objects = [
+            obj for obj in state["objects"] if obj["type"].startswith("E_")
+        ]
+
         # Союзные
         if ally_objects:
             ally_text = self._format_objects_row(ally_objects)
             table.add_row(
-                "🛡️ ",
-                "Союзные войска",
-                f"{ally_text} [dim]({len(ally_objects)})[/]"
+                "🛡️ ", "Союзные войска", f"{ally_text} [dim]({len(ally_objects)})[/]"
             )
-        
+
         # Вражеские
         if enemy_objects:
             enemy_text = self._format_objects_row(enemy_objects)
             table.add_row(
                 "⚔️ ",
                 "Враждебные войска",
-                f"{enemy_text} [dim]({len(enemy_objects)})[/]"
+                f"{enemy_text} [dim]({len(enemy_objects)})[/]",
             )
-        
+
         # Если арена пуста
         if not ally_objects and not enemy_objects:
-            table.add_row(
-                "📍",
-                "Арена",
-                "[dim]Пусто[/]"
-            )
-        
+            table.add_row("📍", "Арена", "[dim]Пусто[/]")
+
         return table
-    
+
     def _format_objects_row(self, objects):
         """Форматирует группу объектов в одну строку"""
         formatted = []
         for obj in objects:
             # Выбираем цвет в зависимости от типа
-            if obj['type'].startswith('A_'):
+            if obj["type"].startswith("A_"):
                 color = "green"  # Союзные - зелёные
-            elif obj['type'].startswith('E_'):
-                color = "red"    # Враги - красные
+            elif obj["type"].startswith("E_"):
+                color = "red"  # Враги - красные
             else:
                 color = "yellow"
-            
+
             # Сокращённое название юнита
-            short_name = self._shorten_unit_name(obj['type'])
-            formatted.append(
-                f"[{color}]{short_name}[/][dim]{obj['confidence']:.0%}[/]"
-            )
-        
+            short_name = self._shorten_unit_name(obj["type"])
+            formatted.append(f"[{color}]{short_name}[/][dim]{obj['confidence']:.0%}[/]")
+
         return " | ".join(formatted)
-    
+
     def _shorten_unit_name(self, full_name):
         """Сокращает название юнита"""
         short = full_name
-        for prefix in ['A_U_', 'E_U_', 'A_B_', 'E_B_', 'A_', 'E_']:
+        for prefix in ["A_U_", "E_U_", "A_B_", "E_B_", "A_", "E_"]:
             if short.startswith(prefix):
-                short = short[len(prefix):]
+                short = short[len(prefix) :]
                 break
-        
-        short = short.replace('-', ' ').replace('_', ' ')
+
+        short = short.replace("-", " ").replace("_", " ")
         return short.title()
-    
+
     def print_arena_details(self, objects):
         """Подробный вывод объектов на арене с разделением"""
         if not objects:
             self.console.print("[yellow]⚠️  Объектов не обнаружено[/]")
             return
-        
+
         # Разделяем на союзных и враждебных
-        ally_objects = [obj for obj in objects if obj['type'].startswith('A_')]
-        enemy_objects = [obj for obj in objects if obj['type'].startswith('E_')]
-        
+        ally_objects = [obj for obj in objects if obj["type"].startswith("A_")]
+        enemy_objects = [obj for obj in objects if obj["type"].startswith("E_")]
+
         # Таблица союзных
         if ally_objects:
             self.console.print("[bold green]🛡️  СОЮЗНЫЕ ВОЙСКА[/]")
             ally_table = self._create_objects_table(ally_objects, "green")
             self.console.print(ally_table)
             self.console.print()
-        
+
         # Таблица враждебных
         if enemy_objects:
             self.console.print("[bold red]⚔️  ВРАЖДЕБНЫЕ ВОЙСКА[/]")
             enemy_table = self._create_objects_table(enemy_objects, "red")
             self.console.print(enemy_table)
             self.console.print()
-    
+
     def _create_objects_table(self, objects, color):
         """Создаёт таблицу для группы объектов"""
         table = Table(
             title=f"Всего: {len(objects)} юнитов",
             show_header=True,
             header_style=f"bold {color}",
-            box=box.ROUNDED
+            box=box.ROUNDED,
         )
         table.add_column("Тип", style=color, width=20)
         table.add_column("Уверенность", justify="right", width=15)
         table.add_column("Позиция", justify="center", width=20)
-        
-        for obj in objects:
-            short_name = self._shorten_unit_name(obj['type'])
-            center = f"({obj['center'][0]}, {obj['center'][1]})"
-            table.add_row(
-                short_name,
-                f"{obj['confidence']:.1%}",
-                center
-            )
-        
-        return table
 
+        for obj in objects:
+            short_name = self._shorten_unit_name(obj["type"])
+            center = f"({obj['center'][0]}, {obj['center'][1]})"
+            table.add_row(short_name, f"{obj['confidence']:.1%}", center)
+
+        return table
 
 
 # ==================== ACTIONS ====================
 
+
 class CRActions:
     """Класс для выполнения действий в игре"""
-    
+
     def tap(self, x: int, y: int):
         """Тап по координатам"""
         self.device.shell(f"input tap {x} {y}")
-    
+
     def swipe(self, x0: int, y0: int, x1: int, y1: int, duration: int = 500):
         """Свайп от точки A к точке B"""
         self.device.shell(f"input swipe {x0} {y0} {x1} {y1} {duration}")
-    
+
     def long_press(self, x: int, y: int, duration: int = 1000):
         """Долгое нажатие"""
         self.device.shell(f"input swipe {x} {y} {x} {y} {duration}")
@@ -211,9 +201,10 @@ class CRActions:
 
 # ==================== RECOGNIZER ====================
 
+
 class CRRecognizer:
     """Класс для распознавания состояния игры"""
-    
+
     def _extract_card_img(self):
         """Вырезает изображения карт из скриншота"""
         cards = []
@@ -232,12 +223,9 @@ class CRRecognizer:
         result = []
         for i, (_, path) in enumerate(cards_img):
             name, conf = self.card_recognizer.predict(str(path))
-            result.append({
-                "index": i,
-                "name": name,
-                "confidence": conf,
-                "path": str(path)
-            })
+            result.append(
+                {"index": i, "name": name, "confidence": conf, "path": str(path)}
+            )
         return result
 
     # ==================== ELIXIR ====================
@@ -263,7 +251,7 @@ class CRRecognizer:
         """Вырезает изображение арены"""
         if screenshot is None:
             screenshot = Image.open(self.SCREENSHOT_PATH)
-        
+
         x1, y1, x2, y2 = self.ARENA_CROP
         arena = screenshot.crop((x1, y1, x2, y2))
         arena.save(f"{self.ARENA_DIR}/arena_screenshot.png")
@@ -272,7 +260,7 @@ class CRRecognizer:
     def get_arena_objects(self):
         """Получает список объектов на арене"""
         arena = self._extract_arena_image()
-        
+
         results = self.arena_detector(arena, verbose=False, imgsz=800)
         objects = []
 
@@ -284,13 +272,15 @@ class CRRecognizer:
                 conf = float(box.conf[0].cpu())
                 cls = int(box.cls[0].cpu())
 
-                objects.append({
-                    "type": self.arena_detector.names[cls],
-                    "confidence": conf,
-                    "bbox": [int(x1), int(y1), int(x2), int(y2)],
-                    "center": [int((x1 + x2) / 2), int((y1 + y2) / 2)],
-                })
-        
+                objects.append(
+                    {
+                        "type": self.arena_detector.names[cls],
+                        "confidence": conf,
+                        "bbox": [int(x1), int(y1), int(x2), int(y2)],
+                        "center": [int((x1 + x2) / 2), int((y1 + y2) / 2)],
+                    }
+                )
+
         return objects
 
     def get_arena_state(self):
@@ -302,11 +292,7 @@ class CRRecognizer:
         cards = []
         for i, (_, path) in enumerate(card_imgs):
             name, conf = self.card_recognizer.predict(str(path))
-            cards.append({
-                "index": i,
-                "name": name,
-                "confidence": conf
-            })
+            cards.append({"index": i, "name": name, "confidence": conf})
 
         # Эликсир
         elic = self._extract_elixir_img(screenshot)
@@ -324,12 +310,14 @@ class CRRecognizer:
                 x1, y1, x2, y2 = box.xyxy[0].cpu().tolist()
                 conf = float(box.conf[0].cpu())
                 cls = int(box.cls[0].cpu())
-                objects.append({
-                    "type": self.arena_detector.names[cls],
-                    "confidence": conf,
-                    "bbox": [int(x1), int(y1), int(x2), int(y2)],
-                    "center": [int((x1 + x2) / 2), int((y1 + y2) / 2)],
-                })
+                objects.append(
+                    {
+                        "type": self.arena_detector.names[cls],
+                        "confidence": conf,
+                        "bbox": [int(x1), int(y1), int(x2), int(y2)],
+                        "center": [int((x1 + x2) / 2), int((y1 + y2) / 2)],
+                    }
+                )
 
         return {
             "elixir": {"elixir": elixir, "confidence": conf_e},
@@ -339,6 +327,7 @@ class CRRecognizer:
 
 
 # ==================== MAIN BOT ====================
+
 
 class CRBot(CRActions, CRRecognizer):
     """Главный класс бота Clash Royale"""
@@ -364,18 +353,18 @@ class CRBot(CRActions, CRRecognizer):
         """Инициализация бота"""
         # ADB подключение
         self.device = adb.device(self.ADB_DEVICE)
-        
+
         # Распознаватели
         self.digit_recognizer = DigitRecognizer()
         self.card_recognizer = CardRecognizer()
         self.arena_detector = YOLO(model_path)
-        
+
         # Принтер состояния
         self.printer = GameStatePrinter()
-        
+
         # Создание директорий
         self._setup_directories()
-        
+
         print("✓ CRBot инициализирован успешно")
 
     def _setup_directories(self):
@@ -399,24 +388,30 @@ class CRBot(CRActions, CRRecognizer):
     def get_raw_screenshot(self) -> Image.Image:
         """Получение скриншота"""
         self.device.shell("screencap /sdcard/screenshot.png")
-        subprocess.run([
-            "adb", "-s", self.ADB_DEVICE,
-            "pull", "/sdcard/screenshot.png",
-            self.SCREENSHOT_PATH
-        ], capture_output=True)
+        subprocess.run(
+            [
+                "adb",
+                "-s",
+                self.ADB_DEVICE,
+                "pull",
+                "/sdcard/screenshot.png",
+                self.SCREENSHOT_PATH,
+            ],
+            capture_output=True,
+        )
         return Image.open(self.SCREENSHOT_PATH)
-    
+
     # ==================== Удобные методы вывода ====================
-    
+
     def print_game_state(self):
         """Красиво выводит состояние игры"""
         state = self.get_arena_state()
         self.printer.print_game_state(state)
-    
+
     def print_arena_details(self):
         """Выводит подробную информацию об объектах"""
         state = self.get_arena_state()
-        self.printer.print_arena_details(state['objects'])
+        self.printer.print_arena_details(state["objects"])
 
 
 # ==================== ИСПОЛЬЗОВАНИЕ ====================
@@ -424,7 +419,7 @@ class CRBot(CRActions, CRRecognizer):
 if __name__ == "__main__":
     bot = CRBot(model_path="runs/detect/train11/weights/best.pt")
     printer = GameStatePrinter()
-    
+
     def signal_handler(sig, frame):
         print("\n🛑 Цикл остановлен пользователем (Ctrl+C)")
         sys.exit(0)
@@ -436,5 +431,3 @@ if __name__ == "__main__":
         state = bot.get_arena_state()
         printer.print_game_state(state)  # ← Выводит ОДНу таблицу
         time.sleep(0.02)  # Обновление каждые 2 секунды
-
-

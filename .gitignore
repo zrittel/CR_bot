@@ -25,6 +25,8 @@ share/python-wheels/
 MANIFEST
 data/training_data
 runs/
+yolov8m.pt
+yolov8n.pt
 
 # IDEs
 .vscode/
