@@ -41,3 +41,4 @@ yolov8n.pt
 # Temp files
 temp/
 *.log
+runs/
