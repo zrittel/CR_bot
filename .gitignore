@@ -23,10 +23,11 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-data/training_data
+data/
 runs/
 yolov8m.pt
 yolov8n.pt
+
 
 # IDEs
 .vscode/
@@ -41,4 +42,3 @@ yolov8n.pt
 # Temp files
 temp/
 *.log
-runs/
