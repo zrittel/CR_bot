@@ -349,7 +349,7 @@ class CRBot(CRActions, CRRecognizer):
     ELIC_DIR = "temp/elic"
     ARENA_DIR = "temp/arena_img"
 
-    def __init__(self, model_path="runs/detect/train11/weights/best.pt"):
+    def __init__(self, model_path="data/models/best.pt"):
         """Инициализация бота"""
         # ADB подключение
         self.device = adb.device(self.ADB_DEVICE)
@@ -417,7 +417,7 @@ class CRBot(CRActions, CRRecognizer):
 # ==================== ИСПОЛЬЗОВАНИЕ ====================
 
 if __name__ == "__main__":
-    bot = CRBot(model_path="runs/detect/train11/weights/best.pt")
+    bot = CRBot(model_path="data/models/best.pt")
     printer = GameStatePrinter()
 
     def signal_handler(sig, frame):
